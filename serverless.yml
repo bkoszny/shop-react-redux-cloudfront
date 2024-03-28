@@ -19,7 +19,7 @@ plugins:
 
 custom:
   client:
-    bucketName: my-store-app
+    bucketName: my-store-app-bkoszny-1
     distributionFolder: dist
   s3BucketName: ${self:custom.client.bucketName}
 
@@ -36,12 +36,20 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.s3BucketName}
-        AccessControl: PublicRead
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: ObjectWriter
         WebsiteConfiguration:
           IndexDocument: index.html
           ErrorDocument: index.html
         # VersioningConfiguration:
         #   Status: Enabled
+
 
     ## Specifying the policies to make sure all files inside the Bucket are avaialble to CloudFront
     WebAppS3BucketPolicy:
@@ -51,6 +59,11 @@ resources:
           Ref: WebAppS3Bucket
         PolicyDocument:
           Statement:
+            - Sid: "PublicReadGetObject"
+              Effect: Allow
+              Principal: '*'
+              Action: s3:GetObject
+              Resource: arn:aws:s3:::${self:custom.s3BucketName}/*
             - Sid: "AllowCloudFrontAccessIdentity"
               Effect: Allow
               Action: s3:GetObject
